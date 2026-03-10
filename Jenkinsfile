@@ -28,7 +28,7 @@ pipeline{
                         // Store credentials as environment variables for use in later stages
                         env.DB_USER = DB_USERNAME
                         env.DB_PASS = DB_PASSWORD
-                        echo "✅ DB Credentials fetched successfully for user: ${env.DB_USER}"
+                        echo " DB Credentials fetched successfully for user: ${env.DB_USER}"
                     }
                 }
             }
@@ -46,7 +46,7 @@ pipeline{
                          
                         ]]
                     ])
-                    echo "✅ Git checkout completed from branch: ${GIT_BRANCH}"
+                    echo "Git checkout completed from branch: ${GIT_BRANCH}"
                 }
             }
         }
@@ -59,25 +59,25 @@ pipeline{
                     // Create fly_way_sql directory if it doesn't exist
                     sh """
                         mkdir -p ${FLYWAY_SQL_DIR}
-                        echo "✅ Created directory: ${FLYWAY_SQL_DIR}"
+                        echo "Created directory: ${FLYWAY_SQL_DIR}"
                     """
 
                     // Create flyway_snapshot directory if it doesn't exist
                     sh """
                         mkdir -p ${FLYWAY_SNAPSHOT}
-                        echo "✅ Created directory: ${FLYWAY_SNAPSHOT}"
+                        echo "Created directory: ${FLYWAY_SNAPSHOT}"
                     """
 
                     // Create undo scripts directory
                     sh """
                         mkdir -p ${UNDO_SCRIPT_DIR}
-                        echo "✅ Created directory: ${UNDO_SCRIPT_DIR}"
+                        echo "Created directory: ${UNDO_SCRIPT_DIR}"
                     """
 
                     // Copy SQL scripts from checkout to fly_way_sql directory
                     sh """
                         cp -r ${WORKSPACE}/sql/* ${FLYWAY_SQL_DIR}/ || true
-                        echo "✅ SQL scripts copied to ${FLYWAY_SQL_DIR}"
+                        echo "SQL scripts copied to ${FLYWAY_SQL_DIR}"
                         ls -la ${FLYWAY_SQL_DIR}
                     """
                 }
@@ -98,7 +98,7 @@ pipeline{
                         # Loop through all .sql files and remove carriage returns (\r)
                         find ${FLYWAY_SQL_DIR} -type f -name "*.sql" | while read file; do
                             sed -i 's/\r//g' "\$file"
-                            echo "✅ Removed carriage return from: \$file"
+                            echo "Removed carriage return from: \$file"
                         done
 
                         echo "--- Adding V tag to SQL scripts ---"
@@ -114,10 +114,10 @@ pipeline{
                                 # Generate version tag and rename file with V prefix
                                 new_name="V\${counter}__\${filename}"
                                 mv "\$file" "${FLYWAY_SQL_DIR}/\${new_name}"
-                                echo "✅ Renamed: \$filename -> \${new_name}"
+                                echo "Renamed: \$filename -> \${new_name}"
                                 counter=\$((counter + 1))
                             else
-                                echo "⏩ Skipped (already has V tag): \$filename"
+                                echo "Skipped (already has V tag): \$filename"
                                 counter=\$((counter + 1))
                             fi
                         done
@@ -153,7 +153,7 @@ pipeline{
                             --triggers \
                             ${DB_NAME} > \$PRE_SNAPSHOT_FILE
 
-                        echo "✅ Pre-migration snapshot saved at: \$PRE_SNAPSHOT_FILE"
+                        echo "Pre-migration snapshot saved at: \$PRE_SNAPSHOT_FILE"
                         ls -lh \$PRE_SNAPSHOT_FILE
 
                         # Save snapshot filename for later reference
@@ -199,7 +199,7 @@ stage('Flyway Baseline') {
                         -baselineVersion=0 \
                         -baselineDescription="Flyway_Baseline" \
                         baseline
-                    echo "✅ Baseline completed"
+                    echo "Baseline completed"
                 else
                     echo "⏩ flyway_schema_history already exists, Skipping Baseline"
                 fi
@@ -228,7 +228,7 @@ stage('Flyway Baseline') {
                             -locations="filesystem:${FLYWAY_SQL_DIR}" \
                             info
 
-                        echo "✅ Flyway Info completed"
+                        echo "Flyway Info completed"
 
                     #    echo "--- Running Flyway Dry Run ---"
                         # Dry run generates SQL script without applying to DB
@@ -240,7 +240,7 @@ stage('Flyway Baseline') {
                       #      -dryRunOutput="\$DRYRUN_FILE" \
                     #        migrate
 
-                       # echo "✅ Dry run completed. Output saved at: \$DRYRUN_FILE"
+                       # echo "Dry run completed. Output saved at: \$DRYRUN_FILE"
 
                       #  echo "--- Reading Dry Run Output File ---"
                        # echo "============================================"
@@ -273,7 +273,7 @@ stage('Flyway Baseline') {
                             -validateOnMigrate=true \
                             migrate
 
-                        echo "✅ Flyway migration completed successfully"
+                        echo "Flyway migration completed successfully"
                     """
                 }
             }
@@ -303,7 +303,7 @@ stage('Flyway Baseline') {
                             --triggers \
                             ${DB_NAME} > \$POST_SNAPSHOT_FILE
 
-                        echo "✅ Post-migration snapshot saved at: \$POST_SNAPSHOT_FILE"
+                        echo "Post-migration snapshot saved at: \$POST_SNAPSHOT_FILE"
                         ls -lh \$POST_SNAPSHOT_FILE
 
                         # Save snapshot filename for later reference
@@ -331,7 +331,7 @@ stage('Flyway Baseline') {
                             -locations="filesystem:${FLYWAY_SQL_DIR}" \
                             info
 
-                        echo "✅ Post-migration DB status check completed"
+                        echo "Post-migration DB status check completed"
                     """
                 }
             }
@@ -345,17 +345,17 @@ stage('Flyway Baseline') {
     
     post {
         success {
-            echo "🎉 ========== PIPELINE COMPLETED SUCCESSFULLY =========="
-            echo "✅ All 1stages executed without errors"
-            echo "✅ Database migration completed for: ${DB_NAME}"
+            echo " ========== PIPELINE COMPLETED SUCCESSFULLY =========="
+            echo "All 1stages executed without errors"
+            echo "Database migration completed for: ${DB_NAME}"
         }
         failure {
-            echo "❌ ========== PIPELINE FAILED =========="
-            echo "❌ Check logs above for error details"
-            echo "⚠️  Consider running Flyway Undo to rollback changes"
+            echo " ========== PIPELINE FAILED =========="
+            echo " Check logs above for error details"
+            echo "  Consider running Flyway Undo to rollback changes"
         }
         always {
-            echo "📋 ========== PIPELINE SUMMARY =========="
+            echo " ========== PIPELINE SUMMARY =========="
             echo "Build Number  : ${BUILD_NUMBER}"
             echo "Build URL     : ${BUILD_URL}"
             echo "Database      : ${DB_NAME}"
