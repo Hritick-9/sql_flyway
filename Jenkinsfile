@@ -351,7 +351,7 @@ stage('Flyway Baseline') {
         }
         failure {
             echo " ========== PIPELINE FAILED =========="
-            echo " Check logs above for error details"
+            echo " Check logs above for error details .."
             echo "  Consider running Flyway Undo to rollback changes"
         }
         always {
